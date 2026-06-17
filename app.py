@@ -80,21 +80,6 @@ input[type="text"], input[type="password"] {
     width: 100% !important;
 }
 
-/* ── Cards de métrica ── */
-[data-testid="metric-container"] {
-    background: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    padding: 8px 10px 6px 10px;
-    text-align: center;
-}
-[data-testid="metric-container"] label {
-    font-size: 0.72rem !important;
-}
-[data-testid="metric-container"] [data-testid="stMetricValue"] {
-    font-size: 1.5rem !important;
-}
-
 /* ── Expanders com borda sutil ── */
 [data-testid="stExpander"] {
     border: 1px solid #dee2e6 !important;
@@ -106,8 +91,92 @@ input[type="text"], input[type="password"] {
 [data-testid="column"] {
     padding: 0 4px !important;
 }
+
+/* ── Mini cards do resumo da conferência (grade horizontal) ── */
+.mini-metric-card {
+    background: #111827;
+    border: 1px solid #374151;
+    border-radius: 10px;
+    padding: 8px 4px;
+    text-align: center;
+    min-height: 64px;
+}
+.mini-metric-label {
+    font-size: 0.68rem;
+    color: #d1d5db;
+    line-height: 1.1;
+    white-space: nowrap;
+    margin-bottom: 6px;
+}
+.mini-metric-value {
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1;
+}
+@media (max-width: 480px) {
+    .mini-metric-card {
+        padding: 7px 2px;
+        min-height: 58px;
+        border-radius: 8px;
+    }
+    .mini-metric-label {
+        font-size: 0.58rem;
+    }
+    .mini-metric-value {
+        font-size: 1.25rem;
+    }
+}
+
+/* ── Força os 5 indicadores do resumo a ficarem sempre em UMA linha,
+   mesmo no celular (o Streamlit, por padrão, quebra st.columns para
+   layout vertical em telas estreitas) ── */
+div[class*="st-key-resumo_conferencia"] div[data-testid="stHorizontalBlock"] {
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    gap: 0.25rem !important;
+}
+div[class*="st-key-resumo_conferencia"] div[data-testid="stColumn"] {
+    flex: 1 1 0 !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    padding: 0 0.15rem !important;
+}
 </style>
 """, unsafe_allow_html=True)
+
+
+def render_resumo_conferencia(conf: dict):
+    """Exibe os 5 indicadores da conferência lado a lado em uma única linha,
+    via st.columns(5) + mini cards HTML (evita o empilhamento vertical que
+    st.metric causa em telas estreitas)."""
+    total_esperado   = conf.get("total_esperado") or 0
+    total_conferido  = conf.get("total_conferido") or 0
+    total_faltante   = conf.get("total_faltante") or 0
+    total_divergente = conf.get("total_divergente") or 0
+    total_duplicado  = conf.get("total_duplicado") or 0
+
+    cards = [
+        ("📋", "Esper.", total_esperado),
+        ("✅", "Conf.",  total_conferido),
+        ("⏳", "Pend.",  total_faltante),
+        ("⚠️", "Div.",   total_divergente),
+        ("🔁", "Repet.", total_duplicado),
+    ]
+
+    with st.container(key="resumo_conferencia"):
+        cols = st.columns(5)
+        for col, (icone, label, valor) in zip(cols, cards):
+            with col:
+                st.markdown(
+                    f"""
+                    <div class="mini-metric-card">
+                        <div class="mini-metric-label">{icone} {label}</div>
+                        <div class="mini-metric-value">{valor}</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
 
 
 def _autofocus(aria_label_substring: str, attempts: int = 8, delay_ms: int = 150):
@@ -455,15 +524,8 @@ def tela_conferencia():
 
     st.markdown("---")
 
-    # ── Cards resumo (2 + 3) ──
-    r1c1, r1c2 = st.columns(2)
-    r1c1.metric("📋 Esperados",  conf.get("total_esperado",  0))
-    r1c2.metric("✅ Conferidos", conf.get("total_conferido", 0))
-
-    r2c1, r2c2, r2c3 = st.columns(3)
-    r2c1.metric("⏳ Pend.",   conf.get("total_faltante",   0))
-    r2c2.metric("⚠️ Diverg.", conf.get("total_divergente", 0))
-    r2c3.metric("🔁 Dupl.",   conf.get("total_duplicado",  0))
+    # ── Cards resumo (grade horizontal, 5 indicadores em uma linha) ──
+    render_resumo_conferencia(conf)
 
     st.markdown("---")
 
