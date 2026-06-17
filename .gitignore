@@ -1,0 +1,32 @@
+# ── Variáveis de ambiente / segredos ──
+.env
+.env.*
+!.env.example
+
+# ── Python ──
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# ── Ambientes virtuais ──
+.venv/
+venv/
+env/
+
+# ── Streamlit ──
+.streamlit/secrets.toml
+
+# ── Editores / IDEs ──
+.vscode/
+.idea/
+
+# ── Claude Code ──
+.claude/
+
+# ── Sistema operacional ──
+.DS_Store
+Thumbs.db
